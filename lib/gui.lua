@@ -12,10 +12,10 @@ local _rnd = math.random
 gui = {}
 
 function gui:create()
-  local guiInstance = {}
-  setmetatable(guiInstance, {__index = self})
-  guiInstance:reset()
-  return guiInstance
+  local _i = {}
+  setmetatable(_i, {__index = self})
+  _i:reset()
+  return _i
 end
 function gui:reset()
   self.controls = {}
@@ -46,41 +46,17 @@ end
 
 function gui:update(dt)
   for i, g in pairs(self.controls) do
-    if overlap(m.x, m.y, 1, 1, g.x, g.y, g.w, g.h) then
-      self.usingmouse = true
-      self.tabindex = i
-      if g.mousedown == false and mouse.isDown("l") then
-        g.mousedown = true
-        print("Mouse Down")
-      end
-    end
-    if g.mousedown == true and mouse.isDown("l") == false then
-      if overlap(m.x, m.y, 1, 1, g.x, g.y, g.w, g.h) then
-        g.mousedown = false
-        print("Mouse Up")
-        g.click()
-      else
-        g.mousedown = false
-        print("Mouse Up (Out)")
-      end
-    end
+    g:update(dt, self)
   end
 end
 
 function gui:draw()
   for i, g in pairs(self.controls) do
-    if g.type == "button" then
-      color(0,0,0)
-      if i == self.tabindex then
-        color(255,0,0)
-      end
-      rectangle("fill", g.x, g.y, g.w, g.h)
-      setFont(g.font)
-      color(255,255,255)
-      gprint(g.title, g.x + g.titleX, g.y + g.titleY)
-      setFont(font["tiny"])
-      gprint(g.tabindex, g.x + 1, g.y + 1)
+    local selected = false
+    if i == self.tabindex then
+      selected = true
     end
+    g:draw(selected)
   end
 end
 
@@ -121,13 +97,16 @@ function gui:keyboard(k)
   end
 end
 
+
 control = { button = {}, slider = {} }
 
+
+--A normal button. Clickable. Press Enter/Return. Attach functions.
 function control.button:new(v)
-  local guiInstance = {}
-  setmetatable(guiInstance, {__index = self})
-  guiInstance:reset(v)
-  return guiInstance
+  local _i = {}
+  setmetatable(_i, {__index = self})
+  _i:reset(v)
+  return _i
 end
 function control.button:reset(v)
   self.x = v.x or 0
@@ -147,4 +126,38 @@ function control.button:reset(v)
   self.sy = self.y + (self.x / 1000)
   self.titleY = (self.h - self.font:getHeight()) / 2+ 5
   self.titleX = (self.w - self.font:getWidth(self.title)) / 2
+end
+function control.button:update(dt, gui)
+  if overlap(m.x, m.y, 1, 1, self.x, self.y, self.w, self.h) then
+    gui.usingmouse = true
+    gui.tabindex = i
+    if self.mousedown == false and mouse.isDown("l") then
+      self.mousedown = true
+      print("Mouse Down")
+    end
+  end
+  if self.mousedown == true and mouse.isDown("l") == false then
+    if overlap(m.x, m.y, 1, 1, self.x, self.y, self.w, self.h) then
+      self.mousedown = false
+      print("Mouse Up")
+      self.click()
+    else
+      self.mousedown = false
+      print("Mouse Up (Out)")
+    end
+  end
+end
+function control.button:draw(selected)
+  if self.type == "button" then
+    color(0,0,0)
+    if selected then
+      color(255,0,0)
+    end
+    rectangle("fill", self.x, self.y, self.w, self.h)
+    setFont(self.font)
+    color(255,255,255)
+    gprint(self.title, self.x + self.titleX, self.y + self.titleY)
+    setFont(font["tiny"])
+    gprint(self.tabindex, self.x + 1, self.y + 1)
+  end
 end

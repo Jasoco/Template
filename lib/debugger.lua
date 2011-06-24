@@ -4,10 +4,10 @@ local _flr = math.floor
 debugger = {}
 
 function debugger:init(v)
-  local debuggerInstance = {}
-  setmetatable(debuggerInstance, {__index = self})
-  debuggerInstance:reset(v)
-  return debuggerInstance
+  local _i = {}
+  setmetatable(_i, {__index = self})
+  _i:reset(v)
+  return _i
 end
 function debugger:reset(v)
   v = v or {}

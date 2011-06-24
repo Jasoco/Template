@@ -10,10 +10,10 @@ local _min = math.min
 displaySettings = {}
 
 function displaySettings:setup(v)
-  local screenInstance = {}
-  setmetatable(screenInstance, {__index = self})
-  screenInstance:reset(v)
-  return screenInstance
+  local _i = {}
+  setmetatable(_i, {__index = self})
+  _i:reset(v)
+  return _i
 end
 function displaySettings:reset(v)
   v = v or {}
