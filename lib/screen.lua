@@ -25,6 +25,7 @@ function displaySettings:reset(v)
   self.hs = self.ts / self.hd
   self.fls = v.floorScale or true
   self.drawmatte = false
+  self.smooth = false
 end
 function displaySettings:updateScale()
   self.sw = graphics.getWidth()
@@ -67,6 +68,9 @@ end
 function displaySettings:getFloorScale()
   return self.fls
 end
+function displaySettings:getSmooth()
+  return self.smooth
+end
 
 function displaySettings:setWidth(w)
   self.w = w
@@ -76,6 +80,9 @@ function displaySettings:setHeight(h)
 end
 function displaySettings:setFloorScale(s)
   self.fls = s
+end
+function displaySettings:setSmooth(s)
+  self.smooth = s
 end
 
 function displaySettings:matte()
@@ -108,8 +115,10 @@ function createBuffers(w,h)
   screen.buffer = {
     ["main"] = graphics.newFramebuffer(nextPO2(w), nextPO2(h))
   }
-  for i, f in pairs(screen.buffer) do
-    f:setFilter("nearest", "nearest")
+  if screen.smooth == false then
+    for i, f in pairs(screen.buffer) do
+      f:setFilter("nearest", "nearest")
+    end
   end
   return true
 end

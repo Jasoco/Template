@@ -23,16 +23,16 @@ function gui:reset()
   self.tabcount = 0
   self.usingmouse = false
 end
-
 function gui:add(v)
   v = v or {}
   v.id = v.id or "g" .. _rnd(100000,999999)
   v.type = v.type or "button"
-  print(v.type)
   local t = v.type
   local n = #self.controls + 1
   if t == "button" then
     self.controls[n] = control.button:new(v)
+  elseif t == "toggle" then
+    self.controls[n] = control.toggle:new(v)
   end
 
   table.sort(self.controls, function(a, b) return a.sy < b.sy end )
@@ -43,10 +43,28 @@ function gui:add(v)
 
   return v.id
 end
+function gui:update()
+  for i, c in pairs(self.controls) do
+    c:update(self)
 
-function gui:update(dt)
-  for i, g in pairs(self.controls) do
-    g:update(dt, self)
+    if overlap(m.x, m.y, 1, 1, c.x, c.y, c.w, c.h) then
+      self.usingmouse = true
+      self.tabindex = c.tabindex
+      if c.mousedown == false and mouse.isDown("l") then
+        c.mousedown = true
+        print("Mouse Down")
+      end
+    end
+    if c.mousedown == true and mouse.isDown("l") == false then
+      if overlap(m.x, m.y, 1, 1, c.x, c.y, c.w, c.h) then
+        c.mousedown = false
+        print("Mouse Up")
+        c:activate()
+      else
+        c.mousedown = false
+        print("Mouse Up (Out)")
+      end
+    end
   end
 end
 
@@ -74,7 +92,7 @@ function gui:previous()
   if self.tabindex < 1 then self.tabindex = self.tabcount end
 end
 
-function gui:keyboard(k)
+function gui:keyPressed(k)
   self.usingmouse = false
   if k == "up" or (k == "tab" and (keyboard.isDown("rshift") or keyboard.isDown("lshift"))) then
     self:previous()
@@ -93,13 +111,20 @@ function gui:keyboard(k)
 
     end
   elseif k == "return" or k == "space" then
-    self.controls[self.tabindex].click()
+    self.controls[self.tabindex]:activate()
   end
 end
 
 
-control = { button = {}, slider = {} }
 
+control = {
+  button = {},
+  slider = {},
+  toggle = {},
+  textbox = {},
+  listbox = {},
+  textarea = {}
+}
 
 --A normal button. Clickable. Press Enter/Return. Attach functions.
 function control.button:new(v)
@@ -117,47 +142,89 @@ function control.button:reset(v)
   self.title = v.title or ""
   self.font = v.font or font["dialog"]
   self.tabindex = -1
-  self.click = v.click or function() print("This button does nothing") end
+  self.click = v.click or function()
+    print("This button does nothing") end
   self.mousedown = false
   self.focus = false
-  self.type = v.type
+  self.type = "button"
   self.cangolr = true
 
   self.sy = self.y + (self.x / 1000)
   self.titleY = (self.h - self.font:getHeight()) / 2+ 5
   self.titleX = (self.w - self.font:getWidth(self.title)) / 2
 end
-function control.button:update(dt, gui)
-  if overlap(m.x, m.y, 1, 1, self.x, self.y, self.w, self.h) then
-    gui.usingmouse = true
-    gui.tabindex = i
-    if self.mousedown == false and mouse.isDown("l") then
-      self.mousedown = true
-      print("Mouse Down")
-    end
-  end
-  if self.mousedown == true and mouse.isDown("l") == false then
-    if overlap(m.x, m.y, 1, 1, self.x, self.y, self.w, self.h) then
-      self.mousedown = false
-      print("Mouse Up")
-      self.click()
-    else
-      self.mousedown = false
-      print("Mouse Up (Out)")
-    end
-  end
+function control.button:update(gui)
+
 end
 function control.button:draw(selected)
-  if self.type == "button" then
-    color(0,0,0)
-    if selected then
-      color(255,0,0)
-    end
-    rectangle("fill", self.x, self.y, self.w, self.h)
-    setFont(self.font)
-    color(255,255,255)
-    gprint(self.title, self.x + self.titleX, self.y + self.titleY)
-    setFont(font["tiny"])
-    gprint(self.tabindex, self.x + 1, self.y + 1)
+  color(0,0,0)
+  if selected then
+    color(255,0,0)
   end
+  rectangle("fill", self.x, self.y, self.w, self.h)
+  setFont(self.font)
+  color(255,255,255)
+  gprint(self.title, self.x + self.titleX, self.y + self.titleY)
+  setFont(font["tiny"])
+  gprint(self.tabindex, self.x + 1, self.y + 1)
+end
+function control.button:activate()
+  self.click()
+end
+
+
+--A toggle button/check box.
+function control.toggle:new(v)
+  local _i = {}
+  setmetatable(_i, {__index = self})
+  _i:reset(v)
+  return _i
+end
+function control.toggle:reset(v)
+  self.x = v.x or 0
+  self.y = v.y or 0
+  self.w = v.w or 0
+  self.h = v.h or 0
+  self.id = v.id
+  self.values = v.values or {"Off", "On"}
+  self.state = v.state or 1
+  self.title = self.values[self.state]
+  self.font = v.font or font["dialog"]
+  self.tabindex = -1
+  self.increment = self.increment or true
+  self.click = v.click or function(s)
+    print("The state of this button is now " .. self.values[s]) end
+  self.mousedown = false
+  self.focus = false
+  self.type = "toggle"
+  self.cangolr = true
+
+  self.sy = self.y + (self.x / 1000)
+  self.titleY = (self.h - self.font:getHeight()) / 2+ 5
+  self.titleX = (self.w - self.font:getWidth(self.title)) / 2
+end
+function control.toggle:update(gui)
+
+end
+function control.toggle:draw(selected)
+  color(0,0,0)
+  if selected then
+    color(255,0,0)
+  end
+  rectangle("fill", self.x, self.y, self.w, self.h)
+  setFont(self.font)
+  color(255,255,255)
+  gprint(self.title, self.x + self.titleX, self.y + self.titleY)
+  setFont(font["tiny"])
+  gprint(self.tabindex, self.x + 1, self.y + 1)
+end
+function control.toggle:activate()
+  if self.increment then
+    self.state = self.state + 1
+    if self.state > #self.values then
+      self.state = 1
+    end
+  end
+  self.title = self.values[self.state]
+  self.click(self.state)
 end

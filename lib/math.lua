@@ -1,3 +1,18 @@
+local _rnd = math.random
+local _flr = math.floor
+local _cei = math.ceil
+local _cos = math.cos
+local _sin = math.sin
+local _sqr = math.sqrt
+local _at2 = math.atan2
+local _d2r = math.rad
+local _r2d = math.deg
+local _mod = math.mod
+local _max = math.max
+local _min = math.min
+
+local pi = math.pi
+
 function distanceFrom(x1,y1,x2,y2) return _sq((x2 - x1) ^ 2 + (y2 - y1) ^ 2) end
 
 function degToRad(d) return d * pi / 180 end
@@ -41,4 +56,8 @@ function rotate_point( cx, cy, ox, oy, angle )
   rot_pnt.x = ox * _c(_d2r(-angle)) - oy * _s(_d2r(-angle))
   rot_pnt.y = ox * _s(_d2r(-angle)) + oy * _c(_d2r(-angle))
   return rot_pnt.x + cx, rot_pnt.y + cy
+end
+
+function intNoise()
+  return ((math.random() * 2) - 1)
 end

@@ -19,7 +19,7 @@ function debugger:reset(v)
   self.key = string.lower(v.key)
   self.font = v.font or font["tiny"]
 end
-function debugger:update(dt, fps)
+function debugger:update()
   self.updates = self.updates + 1
   self.framerates = self.framerates + fps
   if self.on == true then
